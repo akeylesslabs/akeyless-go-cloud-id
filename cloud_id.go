@@ -1,4 +1,4 @@
-package akeyless_cloud_id
+package akeyless_go_cloud_id
 
 import (
 	"encoding/base64"
