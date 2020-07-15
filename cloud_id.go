@@ -15,7 +15,8 @@ func GetCloudId() (string, error) {
 		return "", err
 	}
 
-	// caller identity request can be only us-east-1. Default call brings region where caller is
+	// Endpoint https://sts.amazonaws.com is available only in single region: us-east-1. 
+	// So, caller identity request can be only us-east-1. Default call brings region where caller is
 	awsCfg.Region = "us-east-1"
 
 	svc := sts.New(awsCfg)
