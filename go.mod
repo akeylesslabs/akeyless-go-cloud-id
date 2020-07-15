@@ -1,4 +1,4 @@
-module github.com/akeylesslabs/cloud-id
+module github.com/akeylesslabs/akeyless-cloud-id
 
 go 1.13
 
