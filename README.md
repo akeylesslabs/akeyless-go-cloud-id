@@ -50,7 +50,7 @@ func main() {
 	fmt.Println("Before auth")
 
 	// Authenticate to the service and returns an access token
-	authReplyObj, _, err := api.Auth(aklsCtx, accessId, &akl_sdk.AuthOpts{
+	authReplyObj, _, err := api.Auth(aklsCtx, accessId, &akl_sdk.DefaultApiAuthOpts{
 		AccessType: optional.NewString("aws_iam"),
 		CloudId:    optional.NewString(cloud_id),
 	})

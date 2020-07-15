@@ -33,7 +33,7 @@ func HandleRequest() (string, error) {
 	secretName := "<secret-name>"
 
 	// Authenticate to the service and returns an access token
-	authReplyObj, _, err := api.Auth(aklsCtx, accessId, &akl.AuthOpts{
+	authReplyObj, _, err := api.Auth(aklsCtx, accessId, &akl.DefaultApiAuthOpts{
 		AccessType: optional.NewString("aws_iam"),
 		CloudId:    optional.NewString(cloud_id),
 	})
