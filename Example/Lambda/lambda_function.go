@@ -49,7 +49,7 @@ func HandleRequest() (string, error) {
 		fmt.Println("GetSecretValue error:", err.Error())
 		panic("GetSecretValue failed")
 	}
-	fmt.Println("Secret value:", getValReplyObj.Response[0])
+	fmt.Println("Secret value:", getValReplyObj.Response)
 
 	return "", nil
 }
