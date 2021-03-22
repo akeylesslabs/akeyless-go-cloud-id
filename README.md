@@ -24,7 +24,7 @@ import (
 	"github.com/antihax/optional"
 	"github.com/aws/aws-lambda-go/lambda"
   
-	akl_cloud_id "github.com/akeylesslabs/akeyless-go-cloud-id"
+	akl_cloud_id "github.com/akeylesslabs/akeyless-go-cloud-id/go/src/aws"
 	akl_sdk "github.com/akeylesslabs/akeyless-go-sdk"
 )
 
