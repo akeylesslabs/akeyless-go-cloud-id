@@ -1,4 +1,4 @@
-package akeyless_go_cloud_id
+package aws
 
 import (
 	"encoding/base64"
@@ -15,7 +15,7 @@ func GetCloudId() (string, error) {
 		return "", err
 	}
 
-	// Endpoint https://sts.amazonaws.com is available only in single region: us-east-1. 
+	// Endpoint https://sts.amazonaws.com is available only in single region: us-east-1.
 	// So, caller identity request can be only us-east-1. Default call brings region where caller is
 	awsCfg.Region = "us-east-1"
 
@@ -48,6 +48,6 @@ func GetCloudId() (string, error) {
 		return "", err
 	}
 
-	cloud_id := base64.StdEncoding.EncodeToString(awsDataDump)
-	return cloud_id, nil
+	cloudId := base64.StdEncoding.EncodeToString(awsDataDump)
+	return cloudId, nil
 }
