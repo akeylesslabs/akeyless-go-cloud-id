@@ -1,6 +1,7 @@
 package azure
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -68,7 +69,8 @@ func GetCloudId(objectId string) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to unmarshal azure-ad identity metadata response. Error: %v %v", err, string(body))
 		}
-		return identity.AccessToken, nil
+		cloudId := base64.StdEncoding.EncodeToString([]byte(identity.AccessToken))
+		return cloudId, nil
 	}
 
 	return "", fmt.Errorf(errMsg)
