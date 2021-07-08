@@ -1,5 +1,5 @@
 # akeyless-go-cloud-id
-Retrieves cloud identity. Currently only AWS cloud supported. 
+Retrieves cloud identity. Currently AWS, Azure and GCP are supported. 
 
 ## Installation
 
