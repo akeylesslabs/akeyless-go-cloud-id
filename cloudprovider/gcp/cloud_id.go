@@ -9,6 +9,9 @@ import (
 )
 
 func GetCloudID(audience string) (string, error) {
+	if audience == "" {
+		audience = "akeyless.io"
+	}
 	signedJWT, err := idtoken.NewTokenSource(context.Background(), audience)
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve signed JWT: %w", err)
