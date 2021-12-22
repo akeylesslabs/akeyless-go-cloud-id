@@ -10,13 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 )
 
-const (
-	region = "us-east-1"
-)
-
 func GetCloudId() (string, error) {
 	// Endpoint https://sts.amazonaws.com is available only in single region: us-east-1.
 	// So, caller identity request can be only us-east-1. Default call brings region where caller is
+	region := "us-east-1"
 
 	svc := sts.New(session.Must(session.NewSession()), aws.NewConfig().WithRegion(region))
 
