@@ -5,25 +5,25 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/aws/aws-sdk-go-v2/aws/external"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sts"
+)
+
+const (
+	region = "us-east-1"
 )
 
 func GetCloudId() (string, error) {
-	awsCfg, err := external.LoadDefaultAWSConfig()
-	if err != nil {
-		return "", err
-	}
-
 	// Endpoint https://sts.amazonaws.com is available only in single region: us-east-1.
 	// So, caller identity request can be only us-east-1. Default call brings region where caller is
-	awsCfg.Region = "us-east-1"
 
-	svc := sts.New(awsCfg)
+	svc := sts.New(session.Must(session.NewSession()), aws.NewConfig().WithRegion(region))
+
 	input := &sts.GetCallerIdentityInput{}
-	req := svc.GetCallerIdentityRequest(input)
+	req, _ := svc.GetCallerIdentityRequest(input)
 
-	err = req.Sign()
+	err := req.Sign()
 	if err != nil {
 		return "", err
 	}
