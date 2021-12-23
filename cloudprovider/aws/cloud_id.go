@@ -15,13 +15,16 @@ func GetCloudId() (string, error) {
 	// So, caller identity request can be only us-east-1. Default call brings region where caller is
 	region := "us-east-1"
 
-	svc := sts.New(session.Must(session.NewSession()), aws.NewConfig().WithRegion(region))
+	sess, err := session.NewSession()
+	if err != nil {
+		return "", err
+	}
 
+	svc := sts.New(sess, aws.NewConfig().WithRegion(region))
 	input := &sts.GetCallerIdentityInput{}
 	req, _ := svc.GetCallerIdentityRequest(input)
 
-	err := req.Sign()
-	if err != nil {
+	if err := req.Sign(); err != nil {
 		return "", err
 	}
 
