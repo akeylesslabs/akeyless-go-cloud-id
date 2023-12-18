@@ -1,20 +1,31 @@
 package azure
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"io/ioutil"
 	"net/http"
 	"time"
 )
 
 const AzureADDefResource = "https://management.azure.com/"
+const AzureADManagementScope = "https://management.azure.com/.default"
 const AzureADDefApiVersion = "2018-02-01"
 
 func GetCloudId(objectId string) (string, error) {
 	var errMsg string
 	for retry := 1; retry < 6; retry++ {
+		if objectId == "" {
+			token, err := getCloudId(nil)
+			if err != nil {
+				return "", err
+			}
+			return base64.StdEncoding.EncodeToString([]byte(token)), nil
+		}
 
 		req, err := http.NewRequest("GET", "http://169.254.169.254/metadata/identity/oauth2/token", nil)
 		if err != nil {
@@ -74,4 +85,20 @@ func GetCloudId(objectId string) (string, error) {
 	}
 
 	return "", fmt.Errorf(errMsg)
+}
+
+func getCloudId(ctx context.Context) (string, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to get default Azure credential, Error: %v", err)
+	}
+
+	accessToken, err := cred.GetToken(ctx, policy.TokenRequestOptions{Scopes: []string{AzureADManagementScope}})
+	if err != nil {
+		return "", fmt.Errorf("failed to get Azure token, Error: %v", err)
+	}
+	return accessToken.Token, nil
 }
