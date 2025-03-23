@@ -23,7 +23,7 @@ func GetCloudId() (string, error) {
 	// So, caller identity request can be only us-east-1. Default call brings region where caller is
 	region := "us-east-1"
 
-	ctx := context.TODO()
+	ctx := context.Background()
 	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
 		return "", err
@@ -39,7 +39,6 @@ func GetCloudId() (string, error) {
 			return s.Finalize.Add(captureReq, middleware.After)
 		})
 	})
-
 	if err != nil {
 		return "", err
 	}
