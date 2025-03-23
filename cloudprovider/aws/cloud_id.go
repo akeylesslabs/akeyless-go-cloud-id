@@ -1,13 +1,21 @@
 package aws
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/sts"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
+	"github.com/aws/smithy-go/middleware"
+)
+
+const (
+	AWS_STS_REQUEST_METHOD  = "sts_request_method"
+	AWS_STS_REQUEST_URL     = "sts_request_url"
+	AWS_STS_REQUEST_BODY    = "sts_request_body"
+	AWS_STS_REQUEST_HEADERS = "sts_request_headers"
 )
 
 func GetCloudId() (string, error) {
@@ -15,34 +23,43 @@ func GetCloudId() (string, error) {
 	// So, caller identity request can be only us-east-1. Default call brings region where caller is
 	region := "us-east-1"
 
-	sess, err := session.NewSession()
+	ctx := context.Background()
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	if err != nil {
+		return "", err
+	}
+	stsClient := sts.NewFromConfig(cfg)
+
+	captureReq := &captureSingedRequest{}
+
+	// we don't actually call GetCallerIdentity, we just want the signed request, so we add a middleware
+	// after Finalize to capture it
+	_, err = stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{}, func(o *sts.Options) {
+		o.APIOptions = append(o.APIOptions, func(s *middleware.Stack) error {
+			return s.Finalize.Add(captureReq, middleware.After)
+		})
+	})
 	if err != nil {
 		return "", err
 	}
 
-	svc := sts.New(sess, aws.NewConfig().WithRegion(region))
-	input := &sts.GetCallerIdentityInput{}
-	req, _ := svc.GetCallerIdentityRequest(input)
+	req := captureReq.req
 
-	if err := req.Sign(); err != nil {
-		return "", err
-	}
-
-	headersJson, err := json.Marshal(req.HTTPRequest.Header)
+	headersJson, err := json.Marshal(req.Header)
 	if err != nil {
 		return "", err
 	}
-	requestBody, err := ioutil.ReadAll(req.HTTPRequest.Body)
+	requestBody, err := io.ReadAll(req.GetStream())
 	if err != nil {
 		return "", err
 	}
 
 	awsData := make(map[string]string)
-	awsData["sts_request_method"] = req.HTTPRequest.Method
-	awsData["sts_request_url"] = base64.StdEncoding.EncodeToString([]byte(req.HTTPRequest.URL.String()))
-	awsData["sts_request_body"] = base64.StdEncoding.EncodeToString(requestBody)
-	awsData["sts_request_headers"] = base64.StdEncoding.EncodeToString(headersJson)
+	awsData[AWS_STS_REQUEST_METHOD] = req.Method
+	awsData[AWS_STS_REQUEST_URL] = base64.StdEncoding.EncodeToString([]byte(req.URL.String()))
+	awsData[AWS_STS_REQUEST_HEADERS] = base64.StdEncoding.EncodeToString(headersJson)
 	awsDataDump, err := json.Marshal(awsData)
+	awsData[AWS_STS_REQUEST_BODY] = base64.StdEncoding.EncodeToString(requestBody)
 
 	if err != nil {
 		return "", err
