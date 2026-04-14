@@ -23,22 +23,22 @@ const AzureADManagementScope = "https://management.azure.com/.default"
 const AzureADDefApiVersion = "2018-02-01"
 
 func GetCloudId(objectId string) (string, error) {
+	if objectId == "" {
+		token, err := getCloudId(context.TODO())
+		if err != nil {
+			return "", err
+		}
+		return base64.StdEncoding.EncodeToString([]byte(token)), nil
+	}
+
+	cfg := resolvedAzureCloud()
 	var errMsg string
 	for retry := 1; retry < 6; retry++ {
-		if objectId == "" {
-			token, err := getCloudId(context.TODO())
-			if err != nil {
-				return "", err
-			}
-			return base64.StdEncoding.EncodeToString([]byte(token)), nil
-		}
-
-		req, err := http.NewRequest("GET", "http://169.254.169.254/metadata/identity/oauth2/token", nil)
+		req, err := http.NewRequest("GET", "http://"+imdsHost+"/metadata/identity/oauth2/token", nil)
 		if err != nil {
 			return "", err
 		}
 
-		cfg := resolvedAzureCloud()
 		q := req.URL.Query()
 		q.Add("api-version", AzureADDefApiVersion)
 		q.Add("resource", cfg.resourceURL)
@@ -50,9 +50,7 @@ func GetCloudId(objectId string) (string, error) {
 		req.Header.Set("Metadata", "true")
 		req.Header.Set("User-Agent", "AKEYLESS")
 
-		httpClient := &http.Client{}
-		resp, err := httpClient.Do(req)
-
+		resp, err := imdsHTTPClient.Do(req)
 		if err != nil {
 			return "", fmt.Errorf("failed to fetch azure-ad identity metadata. Error: %v", err.Error())
 		}
@@ -61,8 +59,8 @@ func GetCloudId(objectId string) (string, error) {
 			return "", fmt.Errorf("failed to fetch azure-ad identity metadata. Error: empty response")
 		}
 
-		defer resp.Body.Close()
 		body, err := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
 		if err != nil {
 			return "", fmt.Errorf("failed to read azure-ad identity metadata response. Error: %v", err.Error())
 		}

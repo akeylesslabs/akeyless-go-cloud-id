@@ -22,6 +22,14 @@ const (
 // instanceMetadataAPIVersion is used to read compute.azEnvironment from IMDS.
 const instanceMetadataAPIVersion = "2021-02-01"
 
+// imdsHost is the link-local address for the Azure Instance Metadata Service (IMDS).
+// Microsoft documents this literal IP (not a hostname) for VMs and many Azure-hosted services;
+// see https://learn.microsoft.com/en-us/azure/virtual-machines/instance-metadata-service
+const imdsHost = "169.254.169.254"
+
+// imdsHTTPClient is reused for IMDS requests (timeouts, connection reuse).
+var imdsHTTPClient = &http.Client{Timeout: 5 * time.Second}
+
 type azureCloudConfig struct {
 	resourceURL string
 	scope       string
@@ -135,15 +143,14 @@ func parseAzEnvironmentFromInstanceMetadata(body []byte) (string, bool) {
 }
 
 func defaultFetchInstanceMetadata(ctx context.Context) ([]byte, error) {
-	u := "http://169.254.169.254/metadata/instance?api-version=" + instanceMetadataAPIVersion + "&format=json"
+	u := "http://" + imdsHost + "/metadata/instance?api-version=" + instanceMetadataAPIVersion + "&format=json"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Metadata", "true")
 
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := imdsHTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
