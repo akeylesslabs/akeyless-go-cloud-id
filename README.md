@@ -1,5 +1,27 @@
 # akeyless-go-cloud-id
-Retrieves cloud identity. Currently AWS, Azure and GCP are supported. 
+Retrieves cloud identity. Currently AWS, Azure and GCP are supported.
+
+## Azure cloud environments
+
+The Azure cloud identity helpers pick the correct Resource Manager audience (public, US Government, or China). Resolution runs once per process.
+
+1. **Environment variables** (optional override; checked in this order):
+   - `AZURE_ENVIRONMENT`
+   - `AZURE_CLOUD`
+
+   If the first variable is set but not a supported name, the second is tried. Values are matched case-insensitively. Supported names:
+
+   | Value | Cloud |
+   |-------|--------|
+   | `AzureCloud` or `AzurePublicCloud` | Public Azure |
+   | `AzureUSGovernment` or `AzureUSGovernmentCloud` | Azure US Government |
+   | `AzureChinaCloud` or `AzureChinaCloud21Vianet` | Azure China (21Vianet) |
+
+2. **Automatic detection on Azure VMs**: if neither variable yields a known cloud, the library reads instance metadata (`compute.azEnvironment`) from the Azure IMDS. Typical values are `AzurePublicCloud`, `AzureUSGovernment`, and `AzureChinaCloud`.
+
+3. **Default**: if metadata is unavailable (for example, local development), behavior falls back to **public** Azure (`https://management.azure.com/`).
+
+Import: `github.com/akeylesslabs/akeyless-go-cloud-id/cloudprovider/azure` — use `azure.GetCloudId(...)`.
 
 ## Installation
 

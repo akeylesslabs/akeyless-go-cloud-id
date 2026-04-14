@@ -4,23 +4,29 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 )
 
+// AzureADDefResource is the public Azure Resource Manager audience (legacy default).
 const AzureADDefResource = "https://management.azure.com/"
+
+// AzureADManagementScope is the public Azure Resource Manager OAuth scope (legacy default).
 const AzureADManagementScope = "https://management.azure.com/.default"
+
 const AzureADDefApiVersion = "2018-02-01"
 
 func GetCloudId(objectId string) (string, error) {
 	var errMsg string
 	for retry := 1; retry < 6; retry++ {
 		if objectId == "" {
-			token, err := getCloudId(nil)
+			token, err := getCloudId(context.TODO())
 			if err != nil {
 				return "", err
 			}
@@ -32,9 +38,10 @@ func GetCloudId(objectId string) (string, error) {
 			return "", err
 		}
 
+		cfg := resolvedAzureCloud()
 		q := req.URL.Query()
 		q.Add("api-version", AzureADDefApiVersion)
-		q.Add("resource", AzureADDefResource)
+		q.Add("resource", cfg.resourceURL)
 
 		if objectId != "" {
 			q.Add("object_id", objectId)
@@ -55,7 +62,7 @@ func GetCloudId(objectId string) (string, error) {
 		}
 
 		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return "", fmt.Errorf("failed to read azure-ad identity metadata response. Error: %v", err.Error())
 		}
@@ -69,7 +76,7 @@ func GetCloudId(objectId string) (string, error) {
 				time.Sleep(time.Duration(retry) * time.Second)
 				continue
 			} else {
-				return "", fmt.Errorf(errMsg)
+				return "", errors.New(errMsg)
 			}
 		}
 
@@ -84,19 +91,19 @@ func GetCloudId(objectId string) (string, error) {
 		return cloudId, nil
 	}
 
-	return "", fmt.Errorf(errMsg)
+	return "", errors.New(errMsg)
 }
 
 func getCloudId(ctx context.Context) (string, error) {
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	cred, err := azidentity.NewDefaultAzureCredential(nil)
+	cfg := resolvedAzureCloud()
+	cred, err := azidentity.NewDefaultAzureCredential(&azidentity.DefaultAzureCredentialOptions{
+		ClientOptions: policy.ClientOptions{Cloud: cfg.cloud},
+	})
 	if err != nil {
 		return "", fmt.Errorf("failed to get default Azure credential, Error: %v", err)
 	}
 
-	accessToken, err := cred.GetToken(ctx, policy.TokenRequestOptions{Scopes: []string{AzureADManagementScope}})
+	accessToken, err := cred.GetToken(ctx, policy.TokenRequestOptions{Scopes: []string{cfg.scope}})
 	if err != nil {
 		return "", fmt.Errorf("failed to get Azure token, Error: %v", err)
 	}
