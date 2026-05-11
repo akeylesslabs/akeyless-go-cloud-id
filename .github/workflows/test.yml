@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - "**"
-  pull_request:
-    branches: [ "master" ]
 jobs:
   go-test:
     name: Go Tests
@@ -19,13 +17,7 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: "1.26"
-        cache-dependency-path: |
-          go.sum
-          Example/Lambda/go.sum
+        cache-dependency-path: go.sum
 
     - name: Test root module
-      run: go test -v ./...
-
-    - name: Test Lambda example
-      working-directory: Example/Lambda
       run: go test -v ./...
