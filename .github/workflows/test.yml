@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - "**"
+  pull_request:
+    branches: [ "master" ]
 jobs:
   go-test:
     name: Go Tests
@@ -22,4 +24,8 @@ jobs:
           Example/Lambda/go.sum
 
     - name: Test root module
-      run: go test ./...
+      run: go test -v ./...
+
+    - name: Test Lambda example
+      working-directory: Example/Lambda
+      run: go test -v ./...
