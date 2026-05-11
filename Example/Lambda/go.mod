@@ -1,6 +1,6 @@
 module github.com/akeylesslabs/akeyless-go-cloud-id/example/lambda
 
-go 1.26.2
+go 1.25.8
 
 require (
 	github.com/akeylesslabs/akeyless-go-cloud-id v0.3.5

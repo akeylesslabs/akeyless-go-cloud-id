@@ -1,6 +1,6 @@
 module github.com/akeylesslabs/akeyless-go-cloud-id
 
-go 1.26.2
+go 1.25.8
 
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0
