@@ -1,6 +1,6 @@
 # akeyless-go-cloud-id
 
-Retrieves cloud identity. Currently AWS, Azure and GCP are supported.
+Retrieves cloud identity. Currently AWS, Azure, Alibaba Cloud and GCP are supported.
 
 ## AWS cloud environments
 
@@ -9,6 +9,14 @@ The AWS cloud identity helper uses AWS SDK for Go v2 and signs an STS `GetCaller
 Region is read from the AWS SDK configuration (`AWS_REGION`, `AWS_DEFAULT_REGION`, shared config, or other SDK-supported sources). If no region is configured, the helper falls back to `us-east-1`. For AWS China, configure a China region such as `cn-north-1` or `cn-northwest-1`; the helper signs against the matching STS endpoint under `amazonaws.com.cn`.
 
 Import: `github.com/akeylesslabs/akeyless-go-cloud-id/cloudprovider/aws`; use `aws.GetCloudId()`.
+
+## Alibaba Cloud environments
+
+The Alibaba Cloud identity helper uses the Alibaba credentials chain and signs an STS `GetCallerIdentity` request without sending it. Credentials are resolved through environment variables, shared config/profile files, ECS RAM roles, credentials URI, OIDC/RRSA, and other provider types supported by the Alibaba credentials tool.
+
+Region is read from `ALIBABA_CLOUD_REGION_ID`, `ALIBABA_CLOUD_REGION`, or `REGION_ID`. If no region is configured, the helper falls back to `cn-hangzhou`. The signed request targets the global STS endpoint `sts.aliyuncs.com` and includes the resolved `RegionId` in the request signature.
+
+Import: `github.com/akeylesslabs/akeyless-go-cloud-id/cloudprovider/alibaba`; use `alibaba.GetCloudId()`.
 
 ## Azure cloud environments
 
