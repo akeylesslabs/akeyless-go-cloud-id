@@ -22,12 +22,28 @@ const (
 	stsServiceName   = "sts"
 )
 
+// GetCloudId returns an AWS cloud ID signed for the region in the default AWS SDK configuration.
 func GetCloudId() (string, error) {
-	cfg, err := config.LoadDefaultConfig(context.Background())
+	return getCloudIDFromDefaultConfig(context.Background())
+}
+
+// GetCloudIdWithRegion returns an AWS cloud ID whose STS endpoint and SigV4 credential scope
+// use the given region. Only the cloud ID is affected; the process-wide AWS region (for example
+// AWS_REGION) is left alone. An empty region behaves like GetCloudId.
+func GetCloudIdWithRegion(region string) (string, error) {
+	var optFns []func(*config.LoadOptions) error
+	if region != "" {
+		optFns = append(optFns, config.WithRegion(region))
+	}
+	return getCloudIDFromDefaultConfig(context.Background(), optFns...)
+}
+
+func getCloudIDFromDefaultConfig(ctx context.Context, optFns ...func(*config.LoadOptions) error) (string, error) {
+	cfg, err := config.LoadDefaultConfig(ctx, optFns...)
 	if err != nil {
 		return "", err
 	}
-	return getCloudID(context.Background(), cfg, time.Now())
+	return getCloudID(ctx, cfg, time.Now())
 }
 
 func getCloudID(ctx context.Context, cfg awssdk.Config, signingTime time.Time) (string, error) {

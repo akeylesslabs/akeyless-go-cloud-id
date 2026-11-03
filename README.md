@@ -10,6 +10,8 @@ Region is read from the AWS SDK configuration (`AWS_REGION`, `AWS_DEFAULT_REGION
 
 Import: `github.com/akeylesslabs/akeyless-go-cloud-id/cloudprovider/aws`; use `aws.GetCloudId()`.
 
+To sign the cloud ID for a specific region without changing the region used by your other AWS clients, use `aws.GetCloudIdWithRegion("us-east-1")`. This only changes the STS endpoint and SigV4 credential scope of the cloud ID.
+
 ## Alibaba Cloud environments
 
 The Alibaba Cloud identity helper uses the Alibaba credentials chain and signs an STS `GetCallerIdentity` request without sending it. Credentials are resolved through environment variables, shared config/profile files, ECS RAM roles, credentials URI, OIDC/RRSA, and other provider types supported by the Alibaba credentials tool.
