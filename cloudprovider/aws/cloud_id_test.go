@@ -63,6 +63,35 @@ func TestGetCloudIDPayloadCompatibility(t *testing.T) {
 	}
 }
 
+func TestGetCloudIdWithConfigUsesSuppliedCredentials(t *testing.T) {
+	cfg := awssdk.Config{
+		Region:      "eu-west-1",
+		Credentials: awssdk.NewCredentialsCache(credentials.NewStaticCredentialsProvider("ASSUMEDAKID", "ASSUMEDSECRET", "ASSUMEDSESSION")),
+	}
+	cloudID, err := GetCloudIdWithConfig(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("GetCloudIdWithConfig returned error: %v", err)
+	}
+	got := decodeCloudID(t, cloudID)
+
+	if got.URL != "https://sts.eu-west-1.amazonaws.com/" {
+		t.Errorf("url = %q, want eu-west-1 regional STS endpoint", got.URL)
+	}
+	if got.Headers.Get("X-Amz-Security-Token") != "ASSUMEDSESSION" {
+		t.Errorf("X-Amz-Security-Token = %q", got.Headers.Get("X-Amz-Security-Token"))
+	}
+	if !strings.Contains(got.Headers.Get("Authorization"), "Credential=ASSUMEDAKID/") {
+		t.Errorf("Authorization = %q, want signature with supplied access key", got.Headers.Get("Authorization"))
+	}
+	assertSignedForRegion(t, got.Headers, "eu-west-1")
+}
+
+func TestGetCloudIdWithConfigRequiresCredentials(t *testing.T) {
+	if _, err := GetCloudIdWithConfig(context.Background(), awssdk.Config{Region: "us-east-1"}); err == nil {
+		t.Fatal("expected error for config without credentials")
+	}
+}
+
 func mustGetDecodedCloudID(t *testing.T, cfg awssdk.Config) decodedCloudID {
 	t.Helper()
 
@@ -70,6 +99,11 @@ func mustGetDecodedCloudID(t *testing.T, cfg awssdk.Config) decodedCloudID {
 	if err != nil {
 		t.Fatalf("getCloudID returned error: %v", err)
 	}
+	return decodeCloudID(t, cloudID)
+}
+
+func decodeCloudID(t *testing.T, cloudID string) decodedCloudID {
+	t.Helper()
 
 	rawCloudID, err := base64.StdEncoding.DecodeString(cloudID)
 	if err != nil {
