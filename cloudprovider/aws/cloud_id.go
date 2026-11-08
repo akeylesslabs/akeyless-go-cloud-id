@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
 	"time"
@@ -28,6 +29,15 @@ func GetCloudId() (string, error) {
 		return "", err
 	}
 	return getCloudID(context.Background(), cfg, time.Now())
+}
+
+// GetCloudIdWithConfig builds the aws_iam cloud ID using the credentials and region in cfg,
+// for callers that obtain AWS credentials outside the default provider chain.
+func GetCloudIdWithConfig(ctx context.Context, cfg awssdk.Config) (string, error) {
+	if cfg.Credentials == nil {
+		return "", errors.New("aws config has no credentials provider")
+	}
+	return getCloudID(ctx, cfg, time.Now())
 }
 
 func getCloudID(ctx context.Context, cfg awssdk.Config, signingTime time.Time) (string, error) {
